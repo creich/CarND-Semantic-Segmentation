@@ -7,6 +7,13 @@ from distutils.version import LooseVersion
 import project_tests as tests
 
 
+EPOCHS = 23
+BATCH_SIZE = 4
+LEARNING_RATE = 0.0001
+KEEP_PROB = 0.5
+L2_REG_SCALE = 1e-3
+
+
 # Check TensorFlow Version
 assert LooseVersion(tf.__version__) >= LooseVersion('1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
 print('TensorFlow Version: {}'.format(tf.__version__))
@@ -60,22 +67,22 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     # TODO: Implement function
     conv7_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, kernel_size=1, strides=1, padding='same',
-                                kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     output = tf.layers.conv2d_transpose(conv7_1x1, num_classes, kernel_size=4, strides=2, padding='same',
-                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
     # adding skip connections
     conv4_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, kernel_size=1, strides=1, padding='same',
-                                kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     l4 = tf.add(output, conv4_1x1)
     output = tf.layers.conv2d_transpose(l4, num_classes, kernel_size=4, strides=2, padding='same',
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
     conv3_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, kernel_size=1, strides=1, padding='same',
-                                kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     l3 = tf.add(output, conv3_1x1)
     output = tf.layers.conv2d_transpose(l3, num_classes, kernel_size=16, strides=8, padding='same',
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
 
     return output
@@ -127,8 +134,8 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         for image, label in get_batches_fn(batch_size):
             _, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image,
                                                                           correct_label: label,
-                                                                          keep_prob: 0.5,
-                                                                          learning_rate: 0.0001})
+                                                                          keep_prob: KEEP_PROB,
+                                                                          learning_rate: LEARNING_RATE})
         print('Epoch {}/{}; Training Loss:{:.04f}'.format(epoch + 1, epochs, loss))
 
 tests.test_train_nn(train_nn)
@@ -157,9 +164,6 @@ def run():
         # OPTIONAL: Augment Images for better results
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
 
-        epochs = 5;
-        batch_size = 2;
-
         # TODO: Build NN using load_vgg, layers, and optimize function
         correct_label = tf.placeholder(dtype=tf.int32, shape=(None, None, None, num_classes), name='correct_label')
         learning_rate = tf.placeholder(dtype=tf.float32, name='learning_rate')
@@ -167,14 +171,14 @@ def run():
         vgg_input, vgg_keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
         nn_last_layer = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
 
-        logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, learning_rate, num_classes)
+        logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, LEARNING_RATE, num_classes)
 
 
         # TODO: Train NN using the train_nn function
         sess.run(tf.global_variables_initializer())
         train_nn(sess,
-                 epochs,
-                 batch_size,
+                 EPOCHS,
+                 BATCH_SIZE,
                  get_batches_fn,
                  train_op,
                  cross_entropy_loss,
