@@ -12,6 +12,7 @@ BATCH_SIZE = 4
 LEARNING_RATE = 0.0001
 KEEP_PROB = 0.5
 L2_REG_SCALE = 1e-3
+RAND_INIT_STDDEV = 1e-3
 
 
 # Check TensorFlow Version
@@ -67,22 +68,28 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     # TODO: Implement function
     conv7_1x1 = tf.layers.conv2d(vgg_layer7_out, num_classes, kernel_size=1, strides=1, padding='same',
+                                kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     output = tf.layers.conv2d_transpose(conv7_1x1, num_classes, kernel_size=4, strides=2, padding='same',
+                                        kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
                                         kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
     # adding skip connections
     conv4_1x1 = tf.layers.conv2d(vgg_layer4_out, num_classes, kernel_size=1, strides=1, padding='same',
+                                kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     l4 = tf.add(output, conv4_1x1)
     output = tf.layers.conv2d_transpose(l4, num_classes, kernel_size=4, strides=2, padding='same',
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
+                                        kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
     conv3_1x1 = tf.layers.conv2d(vgg_layer3_out, num_classes, kernel_size=1, strides=1, padding='same',
-                                kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
+                                    kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
+                                    kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
     l3 = tf.add(output, conv3_1x1)
     output = tf.layers.conv2d_transpose(l3, num_classes, kernel_size=16, strides=8, padding='same',
-                                     kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
+                                        kernel_initializer=tf.random_normal_initializer(stddev=RAND_INIT_STDDEV),
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(L2_REG_SCALE))
 
 
     return output
